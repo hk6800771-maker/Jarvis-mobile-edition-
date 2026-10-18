@@ -51,7 +51,7 @@ async function askGemini(p) {
     add('J.A.R.V.I.S: Thinking...', 'ai');
     try {
         const reply = await callGemini(p);
-        chat.lastChild.innerText = 'J.A.R.V.I.S: ' + reply;
+        chat.lastChild.innerText = 'J.A.R.V.I.S: ' + reply.replace(/\*\*/g, '');
         speak(reply);
     } catch (e) {
         chat.lastChild.innerText = 'J.A.R.V.I.S: ERROR - ' + e.message;
