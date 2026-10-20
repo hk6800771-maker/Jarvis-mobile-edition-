@@ -90,7 +90,7 @@ imgInput.onchange = () => {
 
   reader.onload = () => {
     const base64 = reader.result.split(',')[1];
-    const q = input.value.trim() || 'What do you see? Describe briefly in Telugu or English.';
+    const q = input.value.trim() || 'What do you see? Describe in Kannada. You may mix Kannada and English naturally.';
     add('YOU: [IMAGE] ' + q, 'user');
     input.value = '';
     askVision(base64, file.type, q);
