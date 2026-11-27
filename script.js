@@ -1,4 +1,4 @@
-
+alert("JARVIS SCRIPT LOADED");
  // ===== 1. API KEY =====
 let API_KEY = localStorage.getItem('jarvis_key');
 if (!API_KEY) {
