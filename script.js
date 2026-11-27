@@ -33,7 +33,7 @@ if (
   cmd.includes("time") ||
   cmd.includes("date")
 ) {
-  return "LOCAL TOOL ROUTER IS WORKING";
+  return JarvisTools.dateTime();
 }
  // GOOGLE SEARCH
 if (cmd.includes("google search")) {
