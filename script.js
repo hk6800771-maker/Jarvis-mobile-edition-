@@ -21,6 +21,7 @@ const micBtn = document.getElementById('mic-btn');
 const clearBtn = document.getElementById('clear-btn');
 const camBtn = document.getElementById('cam-btn');
 const imgInput = document.getElementById('img-input');
+const sendBtn = document.getElementById('send-btn');
 
 MEMORY.forEach(m => add((m.role === 'user' ? 'YOU: ' : 'J.A.R.V.I.S: ') + m.text, m.role === 'user' ? 'user' : 'ai'));
 
