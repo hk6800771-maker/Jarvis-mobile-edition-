@@ -26,6 +26,15 @@ MEMORY.forEach(m => add((m.role === 'user' ? 'YOU: ' : 'J.A.R.V.I.S: ') + m.text
 
 // ===== 3. GEMINI BRAIN =====
 async function callGemini(p) {
+ // ===== JARVIS LOCAL TOOL ROUTER =====
+const cmd = p.toLowerCase();
+
+if (
+  cmd.includes("time") ||
+  cmd.includes("date")
+) {
+  return JarvisTools.dateTime();
+}
   const contents = MEMORY.slice(-12).map(m => ({
     role: m.role,
     parts: [{ text: m.text }]
