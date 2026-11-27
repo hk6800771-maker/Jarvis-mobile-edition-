@@ -222,7 +222,7 @@ function speak(t) {
   speechSynthesis.speak(u);
 }
 
-document.getElementById('send').onclick = () => {
+sendBtn.onclick = () => {
   const t = input.value.trim();
   if (!t) return;
 
