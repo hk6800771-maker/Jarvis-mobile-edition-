@@ -1,209 +1,67 @@
-alert("JARVIS SCRIPT LOADED");
- // ===== 1. API KEY =====
-let API_KEY = localStorage.getItem('jarvis_key');
-if (!API_KEY) {
-  API_KEY = prompt('Enter your Gemini API Key:');
-  if (API_KEY) localStorage.setItem('jarvis_key', API_KEY);
-}
+// ===========================================
+// J.A.R.V.I.S MOBILE EDITION — COMPLETE JS
+// 15 TOOLS + WORKING BUTTON CONNECTIONS
+// ===========================================
 
-const MODELS = ["gemini-3.5-flash", "gemini-3.1-flash-lite"];
+alert("J.A.R.V.I.S SCRIPT LOADED");
+
+// ===== 1. GEMINI API KEY =====
+let API_KEY = localStorage.getItem("jarvis_key");
+
+if (!API_KEY) {
+  API_KEY = prompt("Enter your Gemini API Key:");
+  if (API_KEY) localStorage.setItem("jarvis_key", API_KEY.trim());
+}
 
 // ===== 2. MEMORY =====
-let MEMORY = JSON.parse(localStorage.getItem('jarvis_memory') || '[]');
+let MEMORY = JSON.parse(localStorage.getItem("jarvis_memory") || "[]");
 
 function saveMemory() {
-  localStorage.setItem('jarvis_memory', JSON.stringify(MEMORY));
+  localStorage.setItem("jarvis_memory", JSON.stringify(MEMORY));
 }
 
-const chat = document.getElementById('chat');
-const input = document.getElementById('msg');
-const micBtn = document.getElementById('mic-btn');
-const clearBtn = document.getElementById('clear-btn');
-const camBtn = document.getElementById('cam-btn');
-const imgInput = document.getElementById('img-input');
-const sendBtn = document.getElementById('send-btn');
+// ===== 3. GET HTML ELEMENTS =====
+const chat = document.getElementById("chat");
+const input = document.getElementById("msg");
+const sendBtn = document.getElementById("send-btn");
+const micBtn = document.getElementById("mic-btn");
+const clearBtn = document.getElementById("clear-btn");
+const camBtn = document.getElementById("cam-btn");
+const galleryBtn = document.getElementById("gallery-btn");
+const imgInput = document.getElementById("img-input");
 
-MEMORY.forEach(m => add((m.role === 'user' ? 'YOU: ' : 'J.A.R.V.I.S: ') + m.text, m.role === 'user' ? 'user' : 'ai'));
-
-// ===== 3. GEMINI BRAIN =====
-async function callGemini(p) {
- // ===== JARVIS LOCAL TOOL ROUTER =====
-const cmd = p.toLowerCase();
-
-if (
-  cmd.includes("time") ||
-  cmd.includes("date")
-) {
-  return JarvisTools.dateTime();
-}
- // GOOGLE SEARCH
-if (cmd.includes("google search")) {
-  const q = p.replace(/google search/i, "").trim();
-  JarvisTools.googleSearch(q);
-  return "Searching Google for " + q;
-}
-
-// YOUTUBE SEARCH
-if (cmd.includes("youtube search")) {
-  const q = p.replace(/youtube search/i, "").trim();
-  JarvisTools.youtubeSearch(q);
-  return "Searching YouTube for " + q;
-}
-
-// WEATHER
-if (cmd.startsWith("weather")) {
-  const city = p.replace(/weather/i, "").trim() || "Bengaluru";
-  JarvisTools.weather(city);
-  return "Checking weather for " + city;
-}
-
-// BATTERY
-if (cmd.includes("battery")) {
-  return await JarvisTools.battery();
-}
-  const contents = MEMORY.slice(-12).map(m => ({
-    role: m.role,
-    parts: [{ text: m.text }]
-  }));
-
-  contents.push({ role: 'user', parts: [{ text: p }] });
-
-  let lastErr;
-
-  for (const m of MODELS) {
-    try {
-      const res = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/' + m + ':generateContent?key=' + API_KEY,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: contents })
-        }
-      );
-
-      const data = await res.json();
-
-      if (data.error) {
-        lastErr = new Error(data.error.message);
-        if (/high demand|temporar|quota|rate|unavailable|deprecated/i.test(data.error.message)) continue;
-        throw lastErr;
-      }
-
-      return data.candidates[0].content.parts[0].text;
-    } catch (e) {
-      lastErr = e;
-    }
-  }
-
-  throw lastErr;
-}
-
-async function askGemini(p) {
-  add('J.A.R.V.I.S: Thinking...', 'ai');
-
-  try {
-    const reply = await callGemini(p);
-    MEMORY.push({ role: 'user', text: p });
-    MEMORY.push({ role: 'model', text: reply });
-    saveMemory();
-
-    chat.lastChild.innerText = 'J.A.R.V.I.S: ' + reply;
-    speak(reply);
-  } catch (e) {
-    chat.lastChild.innerText = 'J.A.R.V.I.S: ERROR - ' + e.message;
-  }
-}
-
-// ===== 4. VISION (EYES) =====
-camBtn.onclick = () => imgInput.click();
-
-imgInput.onchange = () => {
-  const file = imgInput.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-
-  reader.onload = () => {
-    const base64 = reader.result.split(',')[1];
-    const q = input.value.trim() || 'What do you see? Describe in Kannada. You may mix Kannada and English naturally.';
-    add('YOU: [IMAGE] ' + q, 'user');
-    input.value = '';
-    askVision(base64, file.type, q);
-  };
-
-  reader.readAsDataURL(file);
-};
-
-async function askVision(base64, mime, q) {
-  add('J.A.R.V.I.S: Analyzing image...', 'ai');
-
-  let lastErr;
-
-  for (const m of MODELS) {
-    try {
-      const res = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/' + m + ':generateContent?key=' + API_KEY,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: q },
-                {
-                  inline_data: {
-                    mime_type: mime,
-                    data: base64
-                  }
-                }
-              ]
-            }]
-          })
-        }
-      );
-
-      const data = await res.json();
-
-      if (data.error) {
-        lastErr = new Error(data.error.message);
-        if (/high demand|temporar|quota|rate|unavailable|deprecated/i.test(data.error.message)) continue;
-        throw lastErr;
-      }
-
-      const reply = data.candidates[0].content.parts[0].text;
-      chat.lastChild.innerText = 'J.A.R.V.I.S: ' + reply;
-      speak(reply);
-      return;
-    } catch (e) {
-      lastErr = e;
-    }
-  }
-
-  chat.lastChild.innerText = 'J.A.R.V.I.S: ERROR - ' + lastErr.message;
-}
-
-// ===== 5. SPEECH & UTILS =====
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const rec = new SR();
-rec.lang = 'en-US';
-
-rec.onresult = (e) => {
-  const t = e.results[0][0].transcript;
-  add('YOU: ' + t, 'user');
-  askGemini(t);
-};
-
-micBtn.onclick = () => {
-  rec.start();
-  micBtn.innerText = 'LISTENING...';
-};
-
-rec.onend = () => {
-  micBtn.innerText = '🎙️';
-};
-
+let selectedImage = null;
 let voices = [];
 
+// ===== 4. CHAT DISPLAY =====
+function addMessage(text, role = "ai") {
+  const d = document.createElement("div");
+  d.className = "msg " + role;
+  d.innerText = (role === "user" ? "YOU: " : "J.A.R.V.I.S: ") + text;
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function clearChat() {
+  chat.innerHTML = "";
+}
+
+function addImagePreview(file) {
+  const d = document.createElement("div");
+  d.className = "msg user";
+
+  const img = document.createElement("img");
+  img.src = URL.createObjectURL(file);
+  img.style.maxWidth = "220px";
+  img.style.maxHeight = "220px";
+  img.style.borderRadius = "10px";
+
+  d.appendChild(img);
+  chat.appendChild(d);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// ===== 5. SPEECH =====
 function loadVoices() {
   voices = speechSynthesis.getVoices();
 }
@@ -211,50 +69,370 @@ function loadVoices() {
 loadVoices();
 speechSynthesis.onvoiceschanged = loadVoices;
 
-function speak(t) {
-  const u = new SpeechSynthesisUtterance(t);
-  u.rate = 1.05;
-  u.pitch = 0.85;
+function speak(text) {
+  if (!("speechSynthesis" in window)) return;
 
-  const v = voices.find(v => v.lang.startsWith('en'));
-  if (v) u.voice = v;
+  speechSynthesis.cancel();
 
-  speechSynthesis.speak(u);
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 1.0;
+  utterance.pitch = 0.85;
+  utterance.volume = 1;
+
+  const voice = voices.find(v => v.lang.startsWith("en-IN")) ||
+               voices.find(v => v.lang.startsWith("en"));
+
+  if (voice) utterance.voice = voice;
+
+  speechSynthesis.speak(utterance);
 }
 
-sendBtn.onclick = () => {
- alert("SEND BUTTON WORKING");
-  const t = input.value.trim();
-  if (!t) return;
+// ===== 6. GEMINI AI =====
+const MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"];
 
-  add('YOU: ' + t, 'user');
-  input.value = '';
-  askGemini(t);
-};
+async function callGemini(prompt, imageBase64 = null, mimeType = "image/jpeg") {
+  const contents = MEMORY.slice(-12).map(m => ({
+    role: m.role === "user" ? "user" : "model",
+    parts: [{ text: m.text }]
+  }));
 
-clearBtn.onclick = () => {
-  MEMORY = [];
-  saveMemory();
-  chat.innerHTML = '';
-  add('SYSTEM: Memory cleared.', 'ai');
-};
+  const userParts = [{ text: prompt }];
 
-function add(t, w) {
-  const d = document.createElement('div');
-  d.className = 'msg ' + w;
-  d.innerText = t;
-  chat.appendChild(d);
+  if (imageBase64) {
+    userParts.push({
+      inlineData: {
+        mimeType: mimeType,
+        data: imageBase64
+      }
+    });
+  }
+
+  contents.push({
+    role: "user",
+    parts: userParts
+  });
+
+  let lastError = null;
+
+  for (const model of MODELS) {
+    try {
+      const response = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/" +
+        model + ":generateContent?key=" + encodeURIComponent(API_KEY),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: contents,
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 1000
+            }
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const err = new Error(data.error?.message || "Gemini request failed");
+        err.status = response.status;
+        throw err;
+      }
+
+      const answer = data.candidates?.[0]?.content?.parts
+        ?.map(p => p.text || "")
+        .join("");
+
+      if (!answer) throw new Error("Empty AI response");
+
+      return answer;
+
+    } catch (e) {
+      lastError = e;
+
+      if (e.status === 400 || e.status === 403) {
+        throw e;
+      }
+    }
+  }
+
+  throw lastError || new Error("AI connection failed");
+}
+
+// ===== 7. MAIN AI FUNCTION =====
+async function askGemini(prompt, image = null) {
+  if (!API_KEY) {
+    addMessage("API key missing. Reload and enter your API key.", "ai");
+    return;
+  }
+
+  addMessage(prompt, "user");
+
+  if (image) addImagePreview(image);
+
+  const loading = document.createElement("div");
+  loading.className = "msg ai";
+  loading.innerText = "J.A.R.V.I.S: Thinking...";
+  chat.appendChild(loading);
+  chat.scrollTop = chat.scrollHeight;
+
+  try {
+    const reply = await callGemini(
+      prompt,
+      image ? await fileToBase64(image) : null,
+      image?.type || "image/jpeg"
+    );
+
+    loading.innerText = "J.A.R.V.I.S: " + reply;
+
+    MEMORY.push({ role: "user", text: prompt });
+    MEMORY.push({ role: "model", text: reply });
+    saveMemory();
+
+    speak(reply);
+
+  } catch (error) {
+    loading.innerText = "J.A.R.V.I.S ERROR: " + error.message;
+    console.error(error);
+  }
+
   chat.scrollTop = chat.scrollHeight;
 }
 
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
 
-// =====================================
-// JARVIS MOBILE EDITION - 15 TOOLS
-// =====================================
+    reader.onload = () => {
+      const result = reader.result.toString();
+      resolve(result.split(",")[1]);
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ===== 8. TOOL ROUTER =====
+async function callGeminiWithTools(prompt) {
+  const cmd = prompt.toLowerCase().trim();
+
+  // TOOL 14: DATE & TIME
+  if (cmd.includes("time") || cmd.includes("date")) {
+    return JarvisTools.dateTime();
+  }
+
+  // TOOL 7: GOOGLE SEARCH
+  if (cmd.includes("google search")) {
+    const q = prompt.replace(/google search/i, "").trim();
+    JarvisTools.googleSearch(q);
+    return "Searching Google for " + q;
+  }
+
+  // TOOL 8: YOUTUBE SEARCH
+  if (cmd.includes("youtube search")) {
+    const q = prompt.replace(/youtube search/i, "").trim();
+    JarvisTools.youtubeSearch(q);
+    return "Searching YouTube for " + q;
+  }
+
+  // TOOL 6: WEATHER
+  if (cmd.startsWith("weather")) {
+    const city = prompt.replace(/weather/i, "").trim() || "Bengaluru";
+    JarvisTools.weather(city);
+    return "Checking weather for " + city;
+  }
+
+  // TOOL 13: BATTERY
+  if (cmd.includes("battery")) {
+    return await JarvisTools.battery();
+  }
+
+  // TOOL 1: OPEN APP
+  if (cmd.startsWith("open ")) {
+    const app = prompt.substring(5).trim();
+    return JarvisTools.openApp(app);
+  }
+
+  // TOOL 2: CALL
+  if (cmd.startsWith("call ")) {
+    const number = prompt.substring(5).trim();
+    JarvisTools.call(number);
+    return "Opening phone dialer for " + number;
+  }
+
+  // TOOL 3: SMS
+  if (cmd.startsWith("sms ") || cmd.startsWith("message ")) {
+    const message = prompt.substring(prompt.indexOf(" ") + 1).trim();
+    JarvisTools.sms(message);
+    return "Opening SMS";
+  }
+
+  // TOOL 4: ALARM
+  if (cmd.includes("alarm")) {
+    JarvisTools.alarm();
+    return "Opening alarm clock";
+  }
+
+  // TOOL 5: REMINDER
+  if (cmd.startsWith("remind ") || cmd.includes("reminder")) {
+    JarvisTools.reminder(prompt);
+    return "Opening calendar reminder";
+  }
+
+  // TOOL 9: MUSIC
+  if (cmd.startsWith("play ")) {
+    const song = prompt.substring(5).trim();
+    JarvisTools.playMusic(song);
+    return "Searching music for " + song;
+  }
+
+  // TOOL 10: CAMERA
+  if (cmd.includes("camera")) {
+    JarvisTools.camera();
+    return "Opening camera";
+  }
+
+  // TOOL 11: GALLERY
+  if (cmd.includes("gallery") || cmd.includes("photo")) {
+    JarvisTools.gallery();
+    return "Opening gallery";
+  }
+
+  // TOOL 12: FLASHLIGHT
+  if (cmd.includes("flashlight") || cmd.includes("torch")) {
+    return JarvisTools.flashlight();
+  }
+
+  // TOOL 15: PHONE INFO
+  if (cmd.includes("phone info") || cmd.includes("device info")) {
+    return JSON.stringify(JarvisTools.phoneInfo(), null, 2);
+  }
+
+  // GENERAL AI
+  return await callGemini(prompt);
+}
+
+// ===== 9. SEND BUTTON =====
+sendBtn.addEventListener("click", async () => {
+  const text = input.value.trim();
+
+  if (!text) return;
+
+  input.value = "";
+  addMessage(text, "user");
+
+  const loading = document.createElement("div");
+  loading.className = "msg ai";
+  loading.innerText = "J.A.R.V.I.S: Processing...";
+  chat.appendChild(loading);
+  chat.scrollTop = chat.scrollHeight;
+
+  try {
+    const result = await callGeminiWithTools(text);
+    loading.innerText = "J.A.R.V.I.S: " + result;
+    speak(result);
+  } catch (error) {
+    loading.innerText = "J.A.R.V.I.S ERROR: " + error.message;
+    console.error(error);
+  }
+});
+
+// Enter key sends
+input.addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    sendBtn.click();
+  }
+});
+
+// ===== 10. CLEAR BUTTON =====
+clearBtn.addEventListener("click", () => {
+  MEMORY = [];
+  saveMemory();
+  clearChat();
+  addMessage("Memory and chat cleared.", "ai");
+});
+
+// ===== 11. MICROPHONE =====
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+  const recognition = new SpeechRecognition();
+
+  recognition.lang = "en-IN";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    micBtn.innerText = "🔴";
+  };
+
+  recognition.onresult = event => {
+    const spokenText = event.results[0][0].transcript;
+    input.value = spokenText;
+    sendBtn.click();
+  };
+
+  recognition.onerror = event => {
+    addMessage("Microphone error: " + event.error, "ai");
+  };
+
+  recognition.onend = () => {
+    micBtn.innerText = "🎤";
+  };
+
+  micBtn.addEventListener("click", () => {
+    try {
+      recognition.start();
+    } catch (e) {
+    }
+  });
+
+} else {
+  micBtn.addEventListener("click", () => {
+    addMessage("Speech recognition is not supported in this browser.", "ai");
+  });
+}
+
+// ===== 12. CAMERA BUTTON =====
+camBtn.addEventListener("click", () => {
+  imgInput.setAttribute("capture", "environment");
+  imgInput.setAttribute("accept", "image/*");
+  imgInput.click();
+});
+
+// ===== 13. GALLERY BUTTON =====
+galleryBtn.addEventListener("click", () => {
+  imgInput.removeAttribute("capture");
+  imgInput.setAttribute("accept", "image/*");
+  imgInput.click();
+});
+
+// ===== 14. IMAGE ANALYSIS =====
+imgInput.addEventListener("change", async () => {
+  const file = imgInput.files[0];
+
+  if (!file) return;
+
+  selectedImage = file;
+
+  const prompt = "Describe this image in detail. Answer naturally in English or Kannada.";
+
+  await askGemini(prompt, selectedImage);
+
+  imgInput.value = "";
+});
+
+// ===========================================
+// J.A.R.V.I.S MOBILE EDITION — 15 TOOLS
+// ===========================================
 
 const JarvisTools = {
 
-  // 1. Open Android applications
+  // TOOL 1: OPEN ANDROID APPS
   openApp(name) {
     const apps = {
       youtube: "https://youtube.com",
@@ -264,112 +442,140 @@ const JarvisTools = {
       maps: "https://maps.google.com",
       camera: "intent://camera#Intent;scheme=android-app;end"
     };
-    if (apps[name.toLowerCase()]) {
-      window.location.href = apps[name.toLowerCase()];
+
+    const key = name.toLowerCase();
+
+    if (apps[key]) {
+      window.location.href = apps[key];
       return "Opening " + name;
     }
-    return "App not configured";
+
+    window.location.href =
+      "https://www.google.com/search?q=" + encodeURIComponent("open " + name);
+
+    return "Trying to open " + name;
   },
 
-  // 2. Phone call
+  // TOOL 2: PHONE CALL
   call(number) {
     window.location.href = "tel:" + number;
+    return "Opening dialer";
   },
 
-  // 3. Send SMS
-  sms(number, message) {
+  // TOOL 3: SMS
+  sms(message) {
     window.location.href =
-      "sms:" + number + "?body=" +
-      encodeURIComponent(message);
+      "sms:?body=" + encodeURIComponent(message);
+    return "Opening SMS";
   },
 
-  // 4. Set alarm (Android clock intent)
+  // TOOL 4: ALARM
   alarm() {
     window.location.href =
       "intent:#Intent;action=android.intent.action.SET_ALARM;end";
+    return "Opening alarm";
   },
 
-  // 5. Set reminder
+  // TOOL 5: REMINDER
   reminder(message) {
-    window.location.href =
+    window.open(
       "https://calendar.google.com/calendar/u/0/r/eventedit?text=" +
-      encodeURIComponent(message);
+      encodeURIComponent(message),
+      "_blank"
+    );
+    return "Opening calendar";
   },
 
-  // 6. Weather
+  // TOOL 6: WEATHER
   weather(city) {
     window.open(
-      "https://www.google.com/search?q=weather+" +
-      encodeURIComponent(city), "_blank"
+      "https://www.google.com/search?q=" +
+      encodeURIComponent("weather " + city),
+      "_blank"
     );
+    return "Checking weather";
   },
 
-  // 7. Google search
+  // TOOL 7: GOOGLE SEARCH
   googleSearch(query) {
-  window.location.href =
-    "https://www.google.com/search?q=" +
-    encodeURIComponent(query);
-},
+    window.open(
+      "https://www.google.com/search?q=" +
+      encodeURIComponent(query),
+      "_blank"
+    );
+    return "Searching Google";
   },
 
-  // 8. YouTube search
+  // TOOL 8: YOUTUBE SEARCH
   youtubeSearch(query) {
-  window.location.href =
-    "https://www.youtube.com/results?search_query=" +
-    encodeURIComponent(query);
-},
+    window.open(
+      "https://www.youtube.com/results?search_query=" +
+      encodeURIComponent(query),
+      "_blank"
+    );
+    return "Searching YouTube";
   },
 
-  // 9. Music player
+  // TOOL 9: MUSIC
   playMusic(song) {
     window.open(
       "https://www.youtube.com/results?search_query=" +
-      encodeURIComponent(song + " song"), "_blank"
+      encodeURIComponent(song + " song"),
+      "_blank"
     );
+    return "Searching music";
   },
 
-  // 10. Camera
+  // TOOL 10: CAMERA
   camera() {
-    window.location.href =
-      "intent:#Intent;action=android.media.action.IMAGE_CAPTURE;end";
+    imgInput.setAttribute("capture", "environment");
+    imgInput.click();
+    return "Opening camera";
   },
 
-  // 11. Gallery
+  // TOOL 11: GALLERY
   gallery() {
-    window.location.href =
-      "intent:#Intent;action=android.intent.action.GET_CONTENT;type=image/*;end";
+    imgInput.removeAttribute("capture");
+    imgInput.click();
+    return "Opening gallery";
   },
 
-  // 12. Flashlight (browser support varies)
+  // TOOL 12: FLASHLIGHT
   flashlight() {
-    alert("Flashlight requires Android app permission/API integration.");
+    alert("Flashlight control is not supported by this browser. It requires native Android permission access.");
+    return "Flashlight requires Android integration";
   },
 
-  // 13. Battery status
+  // TOOL 13: BATTERY
   async battery() {
     if (!navigator.getBattery) {
-      return "Battery information unavailable";
+      return "Battery information unavailable in this browser.";
     }
+
     const b = await navigator.getBattery();
-    return "Battery: " + Math.round(b.level * 100) + "%";
+
+    return "Battery: " + Math.round(b.level * 100) + "%" +
+      (b.charging ? " — Charging" : " — Not charging");
   },
 
-  // 14. Date and time
+  // TOOL 14: DATE AND TIME
   dateTime() {
     return new Date().toLocaleString();
   },
 
-  // 15. Phone information
+  // TOOL 15: PHONE INFORMATION
   phoneInfo() {
     return {
       device: navigator.userAgent,
       platform: navigator.platform,
-      language: navigator.language
+      language: navigator.language,
+      online: navigator.onLine
     };
   }
+
 };
 
-// Make tools accessible to JARVIS
+// Make tools accessible
 window.JarvisTools = JarvisTools;
 
 console.log("JARVIS: 15 tools loaded successfully.");
