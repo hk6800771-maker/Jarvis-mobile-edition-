@@ -76,17 +76,16 @@ if (SpeechRecognition) {
   };
 
   recognition.onresult = function (event) {
-    const transcript =
-      event.results[0][0].transcript.trim();
+    const transcript = event.results[0][0].transcript.trim();
 
     systemPanel.innerHTML = `
-      <h2>YOU SAID</h2>
-      <p>${transcript}</p>
-      <p>Voice received successfully.</p>
+        <h2>YOU SAID</h2>
+        <p>${transcript}</p>
+        <p>Connecting to JARVIS AI...</p>
     `;
 
-    jarvisSpeak("I heard you say " + transcript);
-  };
+    askJarvis(transcript);
+};
 
   recognition.onerror = function (event) {
     systemPanel.innerHTML = `
@@ -131,3 +130,46 @@ voiceButton.addEventListener("click", function () {
     `;
   }
 });
+
+// ---------- JARVIS AI BRAIN ----------
+
+const JARVIS_BRAIN_URL = "https://script.google.com/macros/s/AKfycbwcHSWxR1HC9m0wYukVDNHPu-4GI5gyLdJ_HnW6q9F8vZ3PnZnYr48CURWpmeymwc0Y/exec";
+
+async function askJarvis(message) {
+    try {
+        systemPanel.innerHTML = `
+            <h2>JARVIS AI</h2>
+            <p>Thinking...</p>
+        `;
+
+        const response = await fetch(JARVIS_BRAIN_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8"
+            },
+            body: JSON.stringify({
+                message: message
+            })
+        });
+
+        const data = await response.json();
+        const reply = data.reply || "I received your message, but I have no response.";
+
+        systemPanel.innerHTML = `
+            <h2>JARVIS RESPONSE</h2>
+            <p>${reply}</p>
+        `;
+
+        jarvisSpeak(reply);
+
+    } catch (error) {
+        systemPanel.innerHTML = `
+            <h2>AI CONNECTION ERROR</h2>
+            <p>Unable to connect to my brain.</p>
+            <p>Please check your internet connection.</p>
+        `;
+
+        jarvisSpeak("I am unable to connect to my brain right now.");
+        console.error("JARVIS AI error:", error);
+    }
+}
