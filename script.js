@@ -223,6 +223,7 @@ function speak(t) {
 }
 
 sendBtn.onclick = () => {
+ alert("SEND BUTTON WORKING");
   const t = input.value.trim();
   if (!t) return;
 
