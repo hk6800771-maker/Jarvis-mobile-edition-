@@ -211,3 +211,129 @@ function add(t, w) {
   chat.scrollTop = chat.scrollHeight;
 }
 
+
+// =====================================
+// JARVIS MOBILE EDITION - 15 TOOLS
+// =====================================
+
+const JarvisTools = {
+
+  // 1. Open Android applications
+  openApp(name) {
+    const apps = {
+      youtube: "https://youtube.com",
+      google: "https://google.com",
+      whatsapp: "https://wa.me/",
+      chrome: "https://google.com",
+      maps: "https://maps.google.com",
+      camera: "intent://camera#Intent;scheme=android-app;end"
+    };
+    if (apps[name.toLowerCase()]) {
+      window.location.href = apps[name.toLowerCase()];
+      return "Opening " + name;
+    }
+    return "App not configured";
+  },
+
+  // 2. Phone call
+  call(number) {
+    window.location.href = "tel:" + number;
+  },
+
+  // 3. Send SMS
+  sms(number, message) {
+    window.location.href =
+      "sms:" + number + "?body=" +
+      encodeURIComponent(message);
+  },
+
+  // 4. Set alarm (Android clock intent)
+  alarm() {
+    window.location.href =
+      "intent:#Intent;action=android.intent.action.SET_ALARM;end";
+  },
+
+  // 5. Set reminder
+  reminder(message) {
+    window.location.href =
+      "https://calendar.google.com/calendar/u/0/r/eventedit?text=" +
+      encodeURIComponent(message);
+  },
+
+  // 6. Weather
+  weather(city) {
+    window.open(
+      "https://www.google.com/search?q=weather+" +
+      encodeURIComponent(city), "_blank"
+    );
+  },
+
+  // 7. Google search
+  googleSearch(query) {
+    window.open(
+      "https://www.google.com/search?q=" +
+      encodeURIComponent(query), "_blank"
+    );
+  },
+
+  // 8. YouTube search
+  youtubeSearch(query) {
+    window.open(
+      "https://www.youtube.com/results?search_query=" +
+      encodeURIComponent(query), "_blank"
+    );
+  },
+
+  // 9. Music player
+  playMusic(song) {
+    window.open(
+      "https://www.youtube.com/results?search_query=" +
+      encodeURIComponent(song + " song"), "_blank"
+    );
+  },
+
+  // 10. Camera
+  camera() {
+    window.location.href =
+      "intent:#Intent;action=android.media.action.IMAGE_CAPTURE;end";
+  },
+
+  // 11. Gallery
+  gallery() {
+    window.location.href =
+      "intent:#Intent;action=android.intent.action.GET_CONTENT;type=image/*;end";
+  },
+
+  // 12. Flashlight (browser support varies)
+  flashlight() {
+    alert("Flashlight requires Android app permission/API integration.");
+  },
+
+  // 13. Battery status
+  async battery() {
+    if (!navigator.getBattery) {
+      return "Battery information unavailable";
+    }
+    const b = await navigator.getBattery();
+    return "Battery: " + Math.round(b.level * 100) + "%";
+  },
+
+  // 14. Date and time
+  dateTime() {
+    return new Date().toLocaleString();
+  },
+
+  // 15. Phone information
+  phoneInfo() {
+    return {
+      device: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language
+    };
+  }
+};
+
+// Make tools accessible to JARVIS
+window.JarvisTools = JarvisTools;
+
+console.log("JARVIS: 15 tools loaded successfully.");
