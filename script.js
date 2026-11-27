@@ -33,7 +33,7 @@ if (
   cmd.includes("time") ||
   cmd.includes("date")
 ) {
-  return JarvisTools.dateTime();
+  return "LOCAL TOOL ROUTER IS WORKING";
 }
   const contents = MEMORY.slice(-12).map(m => ({
     role: m.role,
