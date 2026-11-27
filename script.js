@@ -304,18 +304,18 @@ const JarvisTools = {
 
   // 7. Google search
   googleSearch(query) {
-    window.open(
-      "https://www.google.com/search?q=" +
-      encodeURIComponent(query), "_blank"
-    );
+  window.location.href =
+    "https://www.google.com/search?q=" +
+    encodeURIComponent(query);
+},
   },
 
   // 8. YouTube search
   youtubeSearch(query) {
-    window.open(
-      "https://www.youtube.com/results?search_query=" +
-      encodeURIComponent(query), "_blank"
-    );
+  window.location.href =
+    "https://www.youtube.com/results?search_query=" +
+    encodeURIComponent(query);
+},
   },
 
   // 9. Music player
