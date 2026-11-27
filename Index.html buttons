@@ -1,8 +1,5 @@
-
-<!-- Memory Clear Button -->
-<button id="clear-btn">🧹</button>
-
-<!-- Camera / Vision Button -->
-<button id="cam-btn">📷</button>
-
-<input type="file" id="img-input" accept="image/*" capture="environment" style="display:none">
+<button id="clear-btn">🧠 Memory Clear</button>
+<button id="cam-btn">📷 Camera</button>
+<button id="gallery-btn">🖼️ Gallery</button>
+<button id="mic-btn">🎤 Voice</button>
+<button id="send-btn">⚡ SEND</button>
