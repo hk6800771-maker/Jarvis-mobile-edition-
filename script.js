@@ -35,6 +35,31 @@ if (
 ) {
   return "LOCAL TOOL ROUTER IS WORKING";
 }
+ // GOOGLE SEARCH
+if (cmd.includes("google search")) {
+  const q = p.replace(/google search/i, "").trim();
+  JarvisTools.googleSearch(q);
+  return "Searching Google for " + q;
+}
+
+// YOUTUBE SEARCH
+if (cmd.includes("youtube search")) {
+  const q = p.replace(/youtube search/i, "").trim();
+  JarvisTools.youtubeSearch(q);
+  return "Searching YouTube for " + q;
+}
+
+// WEATHER
+if (cmd.startsWith("weather")) {
+  const city = p.replace(/weather/i, "").trim() || "Bengaluru";
+  JarvisTools.weather(city);
+  return "Checking weather for " + city;
+}
+
+// BATTERY
+if (cmd.includes("battery")) {
+  return await JarvisTools.battery();
+}
   const contents = MEMORY.slice(-12).map(m => ({
     role: m.role,
     parts: [{ text: m.text }]
